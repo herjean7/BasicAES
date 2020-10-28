@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace AesFileEncryption
 {
@@ -9,21 +10,32 @@ namespace AesFileEncryption
         static void Main(string[] args)
         {
             string original = "Here is some data 2 encrypt!";
-            using (var sourceStream = GenerateStreamFromString(original))
-            using (var destinationStream = File.Create(@"C:\temp\encryptedText.txt"))
+            //using (var sourceStream = GenerateStreamFromString(original))
+            //using (var destinationStream = File.Create(@"C:\temp\encryptedText.txt"))
             using (var provider = new AesCryptoServiceProvider())
-            using (var cryptoTransform = provider.CreateEncryptor())
-            using (var cryptoStream = new CryptoStream(destinationStream, cryptoTransform, CryptoStreamMode.Write))
+            //using (var cryptoTransform = provider.CreateEncryptor())
+            //using (var cryptoStream = new CryptoStream(destinationStream, cryptoTransform, CryptoStreamMode.Write))
             {
                 byte[] ivKey = Combine(provider.IV, provider.Key);
                 Console.WriteLine("IvyKey Length:   {0}", ivKey.Length);
-                destinationStream.Write(ivKey, 0, ivKey.Length);
-                Console.WriteLine("Destination Length:   {0}", destinationStream.Length);
-                sourceStream.CopyTo(cryptoStream);
-                Console.WriteLine(Convert.ToBase64String(provider.Key));
-                Console.WriteLine(Convert.ToBase64String(provider.IV));
-                Console.WriteLine("Key Length:   {0}", provider.Key.Length);
-                Console.WriteLine("IV Length:   {0}", provider.IV.Length);
+                //destinationStream.Write(ivKey, 0, ivKey.Length);
+                //Console.WriteLine("Destination Length:   {0}", destinationStream.Length);
+                //sourceStream.CopyTo(cryptoStream);
+                //Console.WriteLine(Convert.ToBase64String(provider.Key));
+                //Console.WriteLine(Convert.ToBase64String(provider.IV));
+                //Console.WriteLine("Key Length:   {0}", provider.Key.Length);
+                //Console.WriteLine("IV Length:   {0}", provider.IV.Length);
+
+                //encrypt destination stream using cert public key
+                byte[] encryptedOriginal = EncryptStringToBytes_Aes(original, provider.Key, provider.IV);
+                byte[] paddedByteArray = Combine(ivKey, encryptedOriginal);
+
+                //GET CERT
+                X509Certificate2 cert = new X509Certificate2();
+                byte[] encryptedPackage = EncryptDataOaepSha1(cert, paddedByteArray);
+
+                //WRITE INTO FILE
+
             }
 
             FileDecryption();
@@ -51,6 +63,68 @@ namespace AesFileEncryption
                     StreamReader reader = new StreamReader(cryptoStream);
                     Console.WriteLine(reader.ReadToEnd());
                 }
+            }
+        }
+
+        static byte[] EncryptStringToBytes_Aes(string plainText, byte[] Key, byte[] IV)
+        {
+            // Check arguments.
+            if (plainText == null || plainText.Length <= 0)
+                throw new ArgumentNullException("plainText");
+            if (Key == null || Key.Length <= 0)
+                throw new ArgumentNullException("Key");
+            if (IV == null || IV.Length <= 0)
+                throw new ArgumentNullException("IV");
+            byte[] encrypted;
+
+            // Create an AesCryptoServiceProvider object
+            // with the specified key and IV.
+            using (AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider())
+            {
+                aesAlg.Key = Key;
+                aesAlg.IV = IV;
+
+                // Create an encryptor to perform the stream transform.
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+
+                // Create the streams used for encryption.
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        {
+                            //Write all data to the stream.
+                            swEncrypt.Write(plainText);
+                        }
+                        encrypted = msEncrypt.ToArray();
+                    }
+                }
+            }
+
+            // Return the encrypted bytes from the memory stream.
+            return encrypted;
+        }
+
+        public static byte[] EncryptDataOaepSha1(X509Certificate2 cert, byte[] data)
+        {
+            // GetRSAPublicKey returns an object with an independent lifetime, so it should be
+            // handled via a using statement.
+            using (RSA rsa = cert.GetRSAPublicKey())
+            {
+                // OAEP allows for multiple hashing algorithms, what was formermly just "OAEP" is
+                // now OAEP-SHA1.
+                return rsa.Encrypt(data, RSAEncryptionPadding.OaepSHA1);
+            }
+        }
+
+        public static byte[] DecryptDataOaepSha1(X509Certificate2 cert, byte[] data)
+        {
+            // GetRSAPrivateKey returns an object with an independent lifetime, so it should be
+            // handled via a using statement.
+            using (RSA rsa = cert.GetRSAPrivateKey())
+            {
+                return rsa.Decrypt(data, RSAEncryptionPadding.OaepSHA1);
             }
         }
 
