@@ -32,7 +32,7 @@ namespace AesFileEncryption
         static void FileDecryption()
         {
             using (var sourceStream = File.OpenRead(@"C:\temp\encryptedText.txt"))
-            using (var destinationStream = File.Create(@"C:\temp\decryptedText.txt"))
+            //using (var destinationStream = File.Create(@"C:\temp\decryptedText.txt"))
             using (var provider = new AesCryptoServiceProvider())
             {
                 Console.WriteLine("Encrypted Length:   {0}", sourceStream.Length);
@@ -40,13 +40,16 @@ namespace AesFileEncryption
                 var Key = new byte[provider.Key.Length];
                 sourceStream.Read(IV, 0, 16);
                 Console.WriteLine(Convert.ToBase64String(IV));
+                //after the first sourceStream reads it, it has moved on. so read from 0 again and get the next 32 bytes
                 sourceStream.Read(Key, 0, 32);
                 Console.WriteLine(Convert.ToBase64String(Key));
 
                 using (var cryptoTransform = provider.CreateDecryptor(Key, IV))
                 using (var cryptoStream = new CryptoStream(sourceStream, cryptoTransform, CryptoStreamMode.Read))
                 {
-                    cryptoStream.CopyTo(destinationStream);
+                    //cryptoStream.CopyTo(destinationStream);
+                    StreamReader reader = new StreamReader(cryptoStream);
+                    Console.WriteLine(reader.ReadToEnd());
                 }
             }
         }
