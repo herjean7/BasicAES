@@ -1,14 +1,14 @@
 # Asymmetric and Symmetric Encryption
 
-In this application, we apply both Asymmetric (Digital Certificates) and Symmetric (AES) Encryptions to safeguard our secrets
+In this application, we apply both Asymmetric (Digital Certificates) and Symmetric (AES) Encryptions to safeguard our secrets between 2 applications
 
-Basics:
+**Basics:**
 
 1. [Symmetric] A random pair of Key and IV is generated each time we initialise AES256
 
 2. [Asymmetric] A public key can be used to encrypt a piece of data and only the private key can be used to decrypt the encrypted data
 
-Steps:
+**Steps:**
 
 1. Generate a random pair of AES Key and IV by initialising AES256
 
