@@ -1,6 +1,6 @@
 # Asymmetric and Symmetric Encryption
 
-In this application, we apply both Asymmetric (Digital Certificates) and Symmetric (AES) Encryptions to safeguard and store our secrets
+In this application, we apply both Asymmetric (Digital Certificates) and Symmetric (AES) Encryptions to safeguard our secrets
 
 Basics:
 
