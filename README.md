@@ -8,6 +8,8 @@ In this application, we apply both Asymmetric (Digital Certificates) and Symmetr
 
 2. [Asymmetric] A public key can be used to encrypt a piece of data and only the private key can be used to decrypt the encrypted data
 
+3. Cert Exchange should be done via another medium
+
 **Steps:**
 
 1. Generate a random pair of AES Key and IV by initialising AES256
